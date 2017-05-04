@@ -149,6 +149,24 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void trackMultiProductsImpression(String trackerId, ReadableArray products, String screenName) {
+        Tracker tracker = getTracker(trackerId);
+
+        if (tracker != null) {
+            
+            HitBuilders.ScreenViewBuilder builder = new HitBuilders.ScreenViewBuilder();
+
+            for (int i = 0; i < products.size(); i++) {
+                ReadableMap product = products.getMap(i);
+                builder.addImpression(product, screenName);
+            }
+
+            tracker.setScreenName(screenName);
+            tracker.send(hit.build());
+        }
+    }
+
+    @ReactMethod
     public void trackMultiProductsPurchaseEventWithCustomDimensionValues(String trackerId, ReadableArray products, ReadableMap transaction, String eventCategory, String eventAction, ReadableMap dimensionIndexValues) {
         Tracker tracker = getTracker(trackerId);
 
@@ -235,6 +253,37 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
 
         if(product.hasKey("couponCode")) {
            ecommerceProduct.setCouponCode(product.getString("couponCode"));
+        }
+
+        return ecommerceProduct;
+    }
+
+    private Product getImpressionProduct(ReadableMap product) {
+        Product ecommerceProduct = new Product()
+           .setId(product.getString("id"))
+           .setName(product.getString("name"));
+
+        // A Product must have a name or id value. All other values are optional and don't need to be set.
+        // https://developers.google.com/analytics/devguides/collection/android/v4/enhanced-ecommerce#measuring-impressions
+
+        if(product.hasKey("brand")) {
+           ecommerceProduct.setBrand(product.getString("brand"));
+        }
+
+        if(product.hasKey("price")) {
+           ecommerceProduct.setPrice(product.getDouble("price"));
+        }
+
+        if(product.hasKey("variant")) {
+           ecommerceProduct.setVariant(product.getString("variant"));
+        }
+
+        if(product.hasKey("category")) {
+           ecommerceProduct.setCategory(product.getString("category"));
+        }
+
+        if(product.hasKey("position")) {
+           ecommerceProduct.setPosition(product.getInt("position"));
         }
 
         return ecommerceProduct;
