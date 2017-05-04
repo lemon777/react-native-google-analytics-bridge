@@ -140,6 +140,92 @@ RCT_EXPORT_METHOD(trackPurchaseEvent:(NSString *)trackerId product:(NSDictionary
     [tracker send:[builder build]];
 }
 
+
+RCT_EXPORT_METHOD(trackMultiProductsImpression:(NSString *)trackerId products:(NSArray *)products screenName:(NSString *)screenName) {
+    
+    id<GAITracker> tracker = [[GAI sharedInstance] trackerWithTrackingId:trackerId];
+    
+    GAIDictionaryBuilder *builder = [GAIDictionaryBuilder createScreenView];
+    
+    for (id product in products) {
+        NSString *productId = [RCTConvert NSString:product[@"id"]];
+        NSString *productName = [RCTConvert NSString:product[@"name"]];
+        NSString *productBrand = [RCTConvert NSString:product[@"brand"]];
+        NSNumber *productPrice = [RCTConvert NSNumber:product[@"price"]];
+        NSString *productVariant = [RCTConvert NSString:product[@"variant"]];
+        NSString *productCategory = [RCTConvert NSString:product[@"category"]];
+        NSString *productList = [RCTConvert NSString:product[@"list"]];
+        NSNumber *productPosition = [RCTConvert NSNumber:product[@"position"]];
+        GAIEcommerceProduct *ecommerceProduct = [[GAIEcommerceProduct alloc] init];
+        [ecommerceProduct setId:productId];
+        [ecommerceProduct setName:productName];
+        [ecommerceProduct setCategory:productCategory];
+        [ecommerceProduct setBrand:productBrand];
+        [ecommerceProduct setVariant:productVariant];
+        [ecommerceProduct setPrice:productPrice];
+        [ecommerceProduct setPosition:productPosition];
+
+
+        [builder addProductImpression:ecommerceProduct
+                   impressionList:productList
+                 impressionSource:@"From Search"];
+    }
+    [tracker set:kGAIScreenName value:screenName];
+    [tracker send:[builder build]];
+    
+}
+
+RCT_EXPORT_METHOD(trackProductAction:(NSString *)trackerId product:(NSDictionary *)product actionName:(NSString *)actionName screenName:(NSString *)screenName) {
+    
+    id<GAITracker> tracker = [[GAI sharedInstance] trackerWithTrackingId:trackerId];
+    
+    GAIDictionaryBuilder *builder = [GAIDictionaryBuilder createEventWithCategory:@"Ecommerce"
+                                                                           action:actionName
+                                                                            label:nil
+                                                                            value:nil];
+    GAIEcommerceProductAction *action = [[GAIEcommerceProductAction alloc] init];
+    
+    if([actionName isEqualToString:@"add"]){
+        [action setAction:kGAIPAAdd];
+    } else if ([actionName isEqualToString:@"click"]){
+        [action setAction:kGAIPAClick];
+    } else if ([actionName isEqualToString:@"detail"]){
+        [action setAction:kGAIPADetail];
+    } else if ([actionName isEqualToString:@"remove"]){
+        [action setAction:kGAIPARemove];
+    }
+    
+    [builder setProductAction:action];
+
+    NSString *productId = [RCTConvert NSString:product[@"id"]];
+    NSString *productName = [RCTConvert NSString:product[@"name"]];
+    NSString *productBrand = [RCTConvert NSString:product[@"brand"]];
+    NSNumber *productPrice = [RCTConvert NSNumber:product[@"price"]];
+    NSString *productVariant = [RCTConvert NSString:product[@"variant"]];
+    NSString *productCategory = [RCTConvert NSString:product[@"category"]];
+    
+    GAIEcommerceProduct *ecommerceProduct = [[GAIEcommerceProduct alloc] init];
+    [ecommerceProduct setId:productId];
+    [ecommerceProduct setName:productName];
+    [ecommerceProduct setCategory:productCategory];
+    [ecommerceProduct setBrand:productBrand];
+    [ecommerceProduct setVariant:productVariant];
+    [ecommerceProduct setPrice:productPrice];
+    
+    if ([product objectForKey:@"quantity"]) {
+        NSNumber *productQuantity = [RCTConvert NSNumber:product[@"position"]];
+        [ecommerceProduct setQuantity:productQuantity];
+    }
+    if ([product objectForKey:@"position"]) {
+        NSNumber *productPosition = [RCTConvert NSNumber:product[@"position"]];
+        [ecommerceProduct setPosition:productPosition];
+    }
+    
+    [builder addProduct:ecommerceProduct];
+
+    [tracker send:[builder build]];
+}
+
 RCT_EXPORT_METHOD(trackMultiProductsPurchaseEvent:(NSString *)trackerId products:(NSArray *)products transaction:(NSDictionary *)transaction eventCategory:(NSString *)eventCategory eventAction:(NSString *)eventAction) {
 
     id<GAITracker> tracker = [[GAI sharedInstance] trackerWithTrackingId:trackerId];
