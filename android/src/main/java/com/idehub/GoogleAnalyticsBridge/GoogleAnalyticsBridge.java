@@ -119,7 +119,7 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
         if (tracker != null) {
 
             HitBuilders.EventBuilder hit = new HitBuilders.EventBuilder()
-                   .addProduct(this.getPurchaseProduct(product))
+                   .addProduct(this.getProduct(product))
                    .setProductAction(this.getPurchaseTransaction(transaction))
                    .setCategory(eventCategory)
                    .setAction(eventAction);
@@ -141,10 +141,43 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
 
             for (int i = 0; i < products.size(); i++) {
                 ReadableMap product = products.getMap(i);
-                hit.addProduct(this.getPurchaseProduct(product));
+                hit.addProduct(this.getProduct(product));
             }
 
             tracker.send(hit.build());
+        }
+    }
+
+    @ReactMethod
+    public void trackProductAction(String trackerId, ReadableMap product, String action , String screenName) {
+        Tracker tracker = getTracker(trackerId);
+        String actionP = "";
+
+        if (tracker != null) {
+            if (action.equals("add")){
+                actionP = ProductAction.ACTION_ADD;
+            }else if (action.equals("click")) {
+                actionP = ProductAction.ACTION_CLICK;
+            } else if (action.equals("detail")) {
+                actionP = ProductAction.ACTION_DETAIL;
+            } else if (action.equals("remove")) {
+                actionP = ProductAction.ACTION_REMOVE;
+            }
+
+            ProductAction productAction = new ProductAction(actionP);
+
+            if(product.hasKey("list")) {
+                productAction.setProductActionList(product.getString("list"));
+            }
+
+            HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder()
+                    .setCategory("Ecommerce")
+                    .setAction(action)
+                    .addProduct(this.getProduct(product))
+                    .setProductAction(productAction);
+
+            tracker.setScreenName(screenName);
+            tracker.send(builder.build());
         }
     }
 
@@ -153,16 +186,16 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
         Tracker tracker = getTracker(trackerId);
 
         if (tracker != null) {
-            
+
             HitBuilders.ScreenViewBuilder builder = new HitBuilders.ScreenViewBuilder();
 
             for (int i = 0; i < products.size(); i++) {
                 ReadableMap product = products.getMap(i);
-                builder.addImpression(product, screenName);
+                builder.addImpression(this.getProduct(product), product.getString("list"));
             }
 
             tracker.setScreenName(screenName);
-            tracker.send(hit.build());
+            tracker.send(builder.build());
         }
     }
 
@@ -179,7 +212,7 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
 
             for (int i = 0; i < products.size(); i++) {
                 ReadableMap product = products.getMap(i);
-                hit.addProduct(this.getPurchaseProduct(product));
+                hit.addProduct(this.getProduct(product));
             }
 
             ReadableMapKeySetIterator iterator = dimensionIndexValues.keySetIterator();
@@ -223,42 +256,7 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
         return productAction;
     }
 
-    private Product getPurchaseProduct(ReadableMap product) {
-        Product ecommerceProduct = new Product()
-           .setId(product.getString("id"))
-           .setName(product.getString("name"));
-
-        // A Product must have a name or id value. All other values are optional and don't need to be set.
-        // https://developers.google.com/analytics/devguides/collection/android/v4/enhanced-ecommerce#measuring-impressions
-
-        if(product.hasKey("brand")) {
-           ecommerceProduct.setBrand(product.getString("brand"));
-        }
-
-        if(product.hasKey("price")) {
-           ecommerceProduct.setPrice(product.getDouble("price"));
-        }
-
-        if(product.hasKey("quantity")) {
-           ecommerceProduct.setQuantity(product.getInt("quantity"));
-        }
-
-        if(product.hasKey("variant")) {
-           ecommerceProduct.setVariant(product.getString("variant"));
-        }
-
-        if(product.hasKey("category")) {
-           ecommerceProduct.setCategory(product.getString("category"));
-        }
-
-        if(product.hasKey("couponCode")) {
-           ecommerceProduct.setCouponCode(product.getString("couponCode"));
-        }
-
-        return ecommerceProduct;
-    }
-
-    private Product getImpressionProduct(ReadableMap product) {
+    private Product getProduct(ReadableMap product) {
         Product ecommerceProduct = new Product()
            .setId(product.getString("id"))
            .setName(product.getString("name"));
@@ -286,6 +284,14 @@ public class GoogleAnalyticsBridge extends ReactContextBaseJavaModule {
            ecommerceProduct.setPosition(product.getInt("position"));
         }
 
+        if(product.hasKey("quantity")) {
+            ecommerceProduct.setQuantity(product.getInt("quantity"));
+        }
+
+        if(product.hasKey("couponCode")) {
+            ecommerceProduct.setCouponCode(product.getString("couponCode"));
+        }
+        
         return ecommerceProduct;
     }
 

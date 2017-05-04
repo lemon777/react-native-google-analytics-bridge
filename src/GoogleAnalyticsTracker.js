@@ -110,14 +110,21 @@ export class GoogleAnalyticsTracker {
   }
 
   /**
-   * Track a purchase event. This uses the Enhanced Ecommerce GA feature.
+   * Track a Impression event. This uses the Enhanced Ecommerce GA feature.
    * @param  {Array} products       An array with products
-   * @param  {Object} transaction   An object with transaction values
-   * @param  {String} eventCategory The event category, defaults to Ecommerce
-   * @param  {String} eventAction   The event action, defaults to Purchase
+   * @param  {String} screenName
    */
   trackMultiProductsImpression(products = [], screenName = "unknown screen") {
     GoogleAnalyticsBridge.trackMultiProductsImpression(this.id, products, screenName);
+  }
+
+  /**
+   * Track a click event. This uses the Enhanced Ecommerce GA feature.
+   * @param  {Object} product       An array with products
+   * @param  {String} screenName
+   */
+  trackProductAction(product = {}, action = "click",screenName = "unknown screen") {
+      GoogleAnalyticsBridge.trackProductAction(this.id, product, action, screenName);
   }
 
   /**
